@@ -3,15 +3,15 @@ import 'firebase/firestore';
 import 'firebase/auth';
 
 const config = {
-    apiKey: "AIzaSyDJbdO7wggbpZMQJZB3-_3gnwHLeXjDX2A",
-    authDomain: "tincanvas-shop-db.firebaseapp.com",
-    databaseURL: "https://tincanvas-shop-db.firebaseio.com",
-    projectId: "tincanvas-shop-db",
-    storageBucket: "tincanvas-shop-db.appspot.com",
-    messagingSenderId: "655303615773",
-    appId: "1:655303615773:web:e428f61269b357b287adf4",
-    measurementId: "G-154BL6EGCD"
-  };
+  apiKey: 'AIzaSyDJbdO7wggbpZMQJZB3-_3gnwHLeXjDX2A',
+  authDomain: 'tincanvas-shop-db.firebaseapp.com',
+  databaseURL: 'https://tincanvas-shop-db.firebaseio.com',
+  projectId: 'tincanvas-shop-db',
+  storageBucket: 'tincanvas-shop-db.appspot.com',
+  messagingSenderId: '655303615773',
+  appId: '1:655303615773:web:e428f61269b357b287adf4',
+  measurementId: 'G-154BL6EGCD',
+};
 
 export const createUserProfileDocument = async (userAuth, additionalData) => {
   if (!userAuth) return;
@@ -19,8 +19,8 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
   const userRef = firestore.doc(`users/${userAuth.uid}`);
 
   const snapShot = await userRef.get();
-  
-  if(!snapShot.exists) {
+
+  if (!snapShot.exists) {
     const { displayName, email } = userAuth;
     const createdAt = new Date();
 
@@ -29,17 +29,51 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
         displayName,
         email,
         createdAt,
-        ...additionalData
-      })
+        ...additionalData,
+      });
     } catch (error) {
       console.log('error creating user', error.message);
     }
   }
 
   return userRef;
-}
+};
 
 firebase.initializeApp(config);
+
+export const addCollectionAndDocuments = async (
+  collectionKey,
+  objectsToAdd
+) => {
+  const collectionRef = firestore.collection(collectionKey);
+  console.log(collectionRef);
+
+  const batch = firestore.batch();
+  objectsToAdd.forEach(obj => {
+    const newDocRef = collectionRef.doc();
+    batch.set(newDocRef, obj);
+  });
+
+  return await batch.commit();
+};
+
+export const convertCollectionsSnapshotToMap = collections => {
+  const transformedCollection = collections.docs.map(doc => {
+    const { title, items } = doc.data();
+
+    return {
+      routeName: encodeURI(title.toLowerCase()),
+      id: doc.id,
+      title,
+      items,
+    };
+  });
+
+  return transformedCollection.reduce((accumulator, collection) => {
+    accumulator[collection.title.toLowerCase()] = collection;
+    return accumulator;
+  }, {});
+};
 
 export const auth = firebase.auth();
 export const firestore = firebase.firestore();
